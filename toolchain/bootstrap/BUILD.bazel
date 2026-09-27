@@ -1,10 +1,22 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 
+# Allocator linked into the bootstrap LLVM binaries when //config:llvm_malloc
+# is "mimalloc". Static malloc replacement is only wired up for Linux.
+alias(
+    name = "mimalloc",
+    actual = select({
+        "@platforms//os:linux": "@mimalloc",
+        "//conditions:default": "@bazel_tools//tools/cpp:malloc",
+    }),
+    visibility = ["//visibility:public"],
+)
+
 bzl_library(
     name = "bootstrap_binary",
     srcs = ["bootstrap_binary.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        ":llvm_malloc",
         ":transition_settings",
         "//tools:defs",
         "@bazel_lib//lib:copy_file",
@@ -19,12 +31,19 @@ bzl_library(
     srcs = ["fdo_profile.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        ":llvm_malloc",
         ":transition_settings",
         "@rules_cc//cc:action_names_bzl",
         "@rules_cc//cc:find_cc_toolchain_bzl",
         "@rules_cc//cc/common",
         "@rules_cc//cc/private/rules_impl/fdo:srcs",
     ],
+)
+
+bzl_library(
+    name = "llvm_malloc",
+    srcs = ["llvm_malloc.bzl"],
+    visibility = ["//visibility:public"],
 )
 
 bzl_library(

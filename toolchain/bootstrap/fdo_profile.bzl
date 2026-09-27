@@ -4,6 +4,7 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_TYPE", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/private/rules_impl/fdo:fdo_profile.bzl", "FdoProfileInfo")  # buildifier: disable=bzl-visibility
+load(":llvm_malloc.bzl", "LLVM_MALLOC_DEFAULT")
 load(":transition_settings.bzl", "LLVM_TOOLS", "SANITIZER_FLAGS", "disable_sanitizers")
 
 LLVMFDOProfileRawInfo = provider(
@@ -49,8 +50,10 @@ _FREESTANDING_COMPILE_FLAGS = [
 
 def _profile_generation_transition_impl(_settings, attr):
     transition_settings = {
+        "//command_line_option:custom_malloc": None,
         "//command_line_option:fdo_profile": None,
         "//command_line_option:platforms": str(attr.target_platform),
+        "//config:llvm_malloc": LLVM_MALLOC_DEFAULT,
         "//toolchain:runtime_stage": "complete",
         "//toolchain:bootstrap_stage": "stage2_lto_and_fdo_instrumented",
         "@llvm-project//llvm:driver-tools": LLVM_TOOLS,
@@ -64,8 +67,10 @@ _profile_generation_transition = transition(
     implementation = _profile_generation_transition_impl,
     inputs = [],
     outputs = [
+        "//command_line_option:custom_malloc",
         "//command_line_option:fdo_profile",
         "//command_line_option:platforms",
+        "//config:llvm_malloc",
         "//toolchain:runtime_stage",
         "//toolchain:bootstrap_stage",
         "@llvm-project//llvm:driver-tools",
@@ -74,7 +79,9 @@ _profile_generation_transition = transition(
 
 def _profile_merge_transition_impl(_settings, _attr):
     return {
+        "//command_line_option:custom_malloc": None,
         "//command_line_option:fdo_profile": None,
+        "//config:llvm_malloc": LLVM_MALLOC_DEFAULT,
         "//toolchain:bootstrap_stage": "stage1_from_source",
     }
 
@@ -82,7 +89,9 @@ _profile_merge_transition = transition(
     implementation = _profile_merge_transition_impl,
     inputs = [],
     outputs = [
+        "//command_line_option:custom_malloc",
         "//command_line_option:fdo_profile",
+        "//config:llvm_malloc",
         "//toolchain:bootstrap_stage",
     ],
 )

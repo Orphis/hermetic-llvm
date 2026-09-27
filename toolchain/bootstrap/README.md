@@ -46,6 +46,19 @@ MSVC LLVM binary. Clang profile remapping does not support the Windows C++ ABI.
 MSVC FDO must remain unsupported until training can execute an instrumented
 Windows LLVM binary and demonstrate profile application to named C++ functions.
 
+## Allocator
+
+On Linux, the source-built LLVM binaries of every stage link
+[mimalloc](https://github.com/microsoft/mimalloc) as their allocator, and so
+do the LLVM prebuilts. They are static musl binaries, and musl's allocator does
+not scale with threads: a multithreaded ThinLTO link spends most of its time in
+the kernel, and even single-threaded compiles are 25-30% slower. Stage1 runs
+every Stage 2 and Stage 3 compile and distributed ThinLTO backend action, and
+the instrumented Stage 2 records the FDO profile with the allocator Stage 3
+ships with. `--@llvm//config:llvm_malloc=system` restores the system
+allocator. Targets other than Linux keep their system allocator, as do the
+programs the FDO workloads build.
+
 ## Compiler resource headers
 
 Clang resource headers belong to the compiler executable, not the target SDK:

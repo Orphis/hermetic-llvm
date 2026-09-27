@@ -1,9 +1,19 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("//toolchain/bootstrap:llvm_malloc.bzl", "LLVM_MALLOC", "LLVM_MALLOC_DEFAULT")
 load(":defs.bzl", "config_settings")
 
 package(default_visibility = ["//visibility:public"])
 
 config_settings()
+
+# Allocator linked into the source-built LLVM binaries of every bootstrap stage
+# (and so into the prebuilts).
+string_flag(
+    name = "llvm_malloc",
+    build_setting_default = LLVM_MALLOC_DEFAULT,
+    values = LLVM_MALLOC.keys(),
+)
 
 bzl_library(
     name = "defs",

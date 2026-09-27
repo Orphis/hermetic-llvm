@@ -3,6 +3,7 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//rules/directory:providers.bzl", "create_directory_info")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
+load(":llvm_malloc.bzl", "LLVM_MALLOC", "LLVM_MALLOC_DEFAULT")
 load(":transition_settings.bzl", "LLVM_TOOLS", "SANITIZER_FLAGS", "disable_sanitizers")
 
 _LLVM_TOOL_FEATURES = [
@@ -42,6 +43,13 @@ def _bootstrap_transition_impl(settings, attr):
         "@llvm-project//llvm:driver-tools": LLVM_TOOLS,
     }
 
+    # Every bootstrap stage links the selected allocator. The choice is carried
+    # by custom_malloc, so reset the flag to keep the configurations of
+    # everything else built along the way independent of it.
+    malloc = LLVM_MALLOC[settings["//config:llvm_malloc"]]
+    transition_settings["//command_line_option:custom_malloc"] = str(malloc) if malloc else None
+    transition_settings["//config:llvm_malloc"] = LLVM_MALLOC_DEFAULT
+
     disable_sanitizers(transition_settings)
 
     if fdo_instrumented:
@@ -59,14 +67,17 @@ bootstrap_transition = transition(
     inputs = [
         "//command_line_option:features",
         "//command_line_option:platforms",
+        "//config:llvm_malloc",
     ],
     outputs = [
         "//command_line_option:compilation_mode",
+        "//command_line_option:custom_malloc",
         "//command_line_option:fdo_profile",
         "//command_line_option:features",
         "//command_line_option:platforms",
         "//toolchain:runtime_stage",
         "//toolchain:bootstrap_stage",
+        "//config:llvm_malloc",
         "@llvm-project//llvm:driver-tools",
     ] + SANITIZER_FLAGS,
 )
