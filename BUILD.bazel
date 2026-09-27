@@ -27,12 +27,6 @@ alias(
 )
 
 alias(
-    name = "rbe_platform_musl",
-    actual = "@rbe_platform//:rbe_platform_musl",
-    visibility = ["//visibility:public"],
-)
-
-alias(
     name = "rbe_linux_x86_64_musl",
     actual = "@rbe_platform//:rbe_linux_x86_64_musl",
     visibility = ["//visibility:public"],

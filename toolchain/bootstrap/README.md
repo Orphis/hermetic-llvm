@@ -34,9 +34,9 @@ registration declared by `declare_toolchains.bzl`.
 Linux compiler binaries selected by the bootstrap toolchains target musl,
 including Stage 2. Their explicit compiler platforms carry the musl constraint
 so the bootstrap transition does not fall back to glibc. `--config=remote`
-prefers musl execution platforms for both Linux architectures, with the host
-architecture first and glibc platforms available for tools that require glibc.
-`--config=release` does not override that execution-platform order.
+uses the host-architecture glibc execution platform. Pass `--config=release`
+after `--config=remote`, as the release scripts do, to override it with the
+x86_64 and aarch64 musl execution platforms.
 
 Windows MSVC Stage 3 binaries use ThinLTO but do not use FDO. Profile generation
 runs the instrumented compiler process, not the target program it emits. The

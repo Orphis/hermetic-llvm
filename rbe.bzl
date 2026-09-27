@@ -33,14 +33,6 @@ alias(
     actual = ":{host_platform}",
     visibility = ["//visibility:public"],
 )
-
-# Do not make rbe_platform_musl an alias: --extra_execution_platforms also
-# registers its parent, and Bazel rejects duplicate resolved platform labels.
-platform(
-    name = "rbe_platform_musl",
-    parents = [":{host_platform}_musl"],
-    visibility = ["//visibility:public"],
-)
 """.format(host_platform = host_platform))
 
     rctx.file("BUILD.bazel", "\n".join(platforms))
