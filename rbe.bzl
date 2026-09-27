@@ -39,5 +39,5 @@ alias(
 
 rbe_platform_repository = repository_rule(
     implementation = _rbe_platform_repo_impl,
-    doc = "Sets up glibc and musl AMD64 and ARM64 Linux platforms for remote builds.",
+    doc = "Sets up AMD64 and ARM64 Linux platforms for remote builds.",
 )
