@@ -7,47 +7,45 @@ def _rbe_platform_repo_impl(rctx):
     else:
         fail("Unsupported host arch for rbe platform: {}".format(arch))
 
-    rctx.file("BUILD.bazel", """\
+    platforms = []
+    for cpu, exec_arch in [("x86_64", "amd64"), ("aarch64", "arm64")]:
+        for suffix, libc in [("", "gnu.2.28"), ("_musl", "musl")]:
+            platforms.append("""\
 platform(
-    name = "rbe_linux_x86_64",
+    name = "rbe_linux_{cpu}{suffix}",
     constraint_values = [
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:{cpu}",
         "@platforms//os:linux",
-        "@llvm//constraints/libc:gnu.2.28",
+        "@llvm//constraints/libc:{libc}",
     ],
     exec_properties = {{
         "container-image": "docker://ubuntu:22.04",
-        "Arch": "amd64",
+        "Arch": "{exec_arch}",
         "OSFamily": "Linux",
     }},
     visibility = ["//visibility:public"],
 )
+""".format(cpu = cpu, exec_arch = exec_arch, libc = libc, suffix = suffix))
 
-platform(
-    name = "rbe_linux_aarch64",
-    constraint_values = [
-        "@platforms//cpu:aarch64",
-        "@platforms//os:linux",
-        "@llvm//constraints/libc:gnu.2.28",
-    ],
-    exec_properties = {{
-        "container-image": "docker://ubuntu:22.04",
-        "Arch": "arm64",
-        "OSFamily": "Linux",
-    }},
-    visibility = ["//visibility:public"],
-)
-
+    platforms.append("""\
 alias(
     name = "rbe_platform",
     actual = ":{host_platform}",
     visibility = ["//visibility:public"],
 )
-""".format(
-        host_platform = host_platform,
-    ))
+
+# Do not make rbe_platform_musl an alias: --extra_execution_platforms also
+# registers its parent, and Bazel rejects duplicate resolved platform labels.
+platform(
+    name = "rbe_platform_musl",
+    parents = [":{host_platform}_musl"],
+    visibility = ["//visibility:public"],
+)
+""".format(host_platform = host_platform))
+
+    rctx.file("BUILD.bazel", "\n".join(platforms))
 
 rbe_platform_repository = repository_rule(
     implementation = _rbe_platform_repo_impl,
-    doc = "Sets up AMD64 and ARM64 Linux platforms for remote builds.",
+    doc = "Sets up glibc and musl AMD64 and ARM64 Linux platforms for remote builds.",
 )

@@ -31,6 +31,13 @@ Stage 1 for both the instrumented Stage 2 and source-backed Stage 3 builds.
 The `bootstrap_stage` build setting selects the matching source-built toolchain
 registration declared by `declare_toolchains.bzl`.
 
+Linux compiler binaries selected by the bootstrap toolchains target musl,
+including Stage 2. Their explicit compiler platforms carry the musl constraint
+so the bootstrap transition does not fall back to glibc. `--config=remote`
+prefers musl execution platforms for both Linux architectures, with the host
+architecture first and glibc platforms available for tools that require glibc.
+`--config=release` does not override that execution-platform order.
+
 Windows MSVC Stage 3 binaries use ThinLTO but do not use FDO. Profile generation
 runs the instrumented compiler process, not the target program it emits. The
 available profile executors are Linux binaries and therefore record Itanium C++
