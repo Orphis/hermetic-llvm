@@ -100,6 +100,41 @@ so the shards share their runtimes in the remote cache.
 MSVC-ABI binaries, with the profiles placed in
 `//toolchain/bootstrap/external_fdo_profile`, merged.
 
+### Training on other hosts
+
+`.github/workflows/llvm-prebuilt-pgo.yml` trains on a host of the prebuilt's
+own platform, so macOS and Windows prebuilts get a profile of themselves rather
+than of the Linux binaries:
+
+1. On Linux with BuildBuddy, `//prebuilt/llvm:instrumented_stage2_<host>`
+   packages the instrumented Stage 2 for the host. Stage 2 is instrumented only
+   in an exec configuration, so it is built with the host's platform appended to
+   `--extra_execution_platforms`.
+2. On a runner of the host, the archive replaces the host's Stage 0 repository
+   (`--override_repository`), and `llvm_fdo_profdata_<executor>` is built with
+   `--//toolchain/bootstrap:fdo_training_compiler=prebuilt`. The workloads run
+   on the runner; the target runtimes they link build on BuildBuddy.
+3. On Linux with BuildBuddy, the release archives are built with
+   `--//toolchain/bootstrap:use_external_fdo_profile`, which applies the profile
+   placed in `//toolchain/bootstrap/external_fdo_profile`.
+
+Prebuilts train on their own host, or reuse a profile of the other
+architecture of their OS: the training cross-compiles to every target on any
+host, and the function names match across architectures.
+
+| Prebuilt | Training host |
+| --- | --- |
+| Linux x86_64, arm64 | BuildBuddy workers of the architecture, within the Stage 3 build |
+| macOS arm64 | `macos-15` runners, 4 shards |
+| macOS x86_64 | reuses the macOS arm64 profile |
+| Windows x86_64 (MSVC ABI) | `windows-2025` runners, 6 shards |
+| Windows arm64 (MSVC ABI) | reuses the Windows x86_64 profile |
+
+The training jobs of a host each train one shard, and Stage 3 merges the
+profiles of all shards.
+
+A final job collects every archive with its checksums.
+
 ## Compiler resource headers
 
 Clang resource headers belong to the compiler executable, not the target SDK:
