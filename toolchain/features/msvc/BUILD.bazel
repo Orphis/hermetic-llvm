@@ -196,6 +196,18 @@ config_setting(
     values = {"features": "static_link_msvcrt"},
 )
 
+# MSVC-ABI builds that link the C runtime statically. The LLVM binaries use
+# mimalloc as their allocator there.
+config_setting(
+    name = "windows_msvc_static_crt",
+    constraint_values = [
+        "@platforms//os:windows",
+        "//constraints/windows/abi:msvc",
+    ],
+    values = {"features": "static_link_msvcrt"},
+    visibility = ["//visibility:public"],
+)
+
 cc_mutually_exclusive_category(
     name = "crt_mode",
 )
